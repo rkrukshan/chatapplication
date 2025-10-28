@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spring Boot WebSocket Chat App</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://kit.fontawesome.com/a2e0a2b0a5.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+
+</head>
+<body class="min-h-screen bg-gradient-to-tr from-blue-500 to-blue-200 flex items-center justify-center font-sans">
+
+<div id="username-page" class="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl p-8">
+    <h2 class="text-2xl font-bold text-center mb-2 text-blue-500 flex justify-center items-center gap-2">
+        <i class="fa-solid fa-comments"></i> Welcome to Chat Application
+    </h2>
+    <p class="text-gray-500 text-center mb-6">Enter your username to start chatting</p>
+
+    <form id="usernameForm" class="space-y-4">
+        <div>
+            <label for="name" class="block text-gray-700 font-medium mb-1">Username</label>
+            <div class="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-400">
+                <i class="fa-solid fa-user text-gray-400 mr-2"></i>
+                <input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your username"
+                        class="w-full outline-none"
+                        required
+                />
+            </div>
+            <small class="text-gray-400 text-sm">Enter Username</small>
+        </div>
+
+        <button
+                type="submit"
+                class="w-full bg-gradient-to-tr from-blue-500 to-blue-200 text-stone-100 font-semibold rounded-lg py-3 hover:shadow-lg transition duration-200"
+        >
+            <i class="fa-solid fa-right-to-bracket mr-2"></i> Start Chatting
+        </button>
+    </form>
+</div>
+
+<div id="chat-page" class="hidden w-full max-w-3xl bg-white/95 backdrop-blur rounded-2xl shadow-2xl overflow-hidden">
+    <div class="bg-gradient-to-tr from-blue-900 to-blue-300 text-white px-6 py-4 flex justify-between items-center">
+        <div>
+            <h3 class="text-xl font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-comments"></i> Chat Room
+            </h3>
+            <p class="text-sm text-indigo-200" id="room-info">Real-time messaging</p>
+        </div>
+        <div class="flex items-center gap-3">
+      <span id="connection-status" class="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+        <i class="fa-solid fa-wifi"></i> Connected
+      </span>
+        </div>
+    </div>
+
+    <div id="chat" class="h-96 overflow-y-auto p-6 space-y-3 bg-gray-50"></div>
+
+    <div class="border-t border-gray-200 p-4 bg-white">
+        <form id="messageForm" class="flex items-center gap-2">
+            <input
+                    id="message"
+                    type="text"
+                    placeholder="Type your message..."
+                    class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+            />
+            <button
+                    type="submit"
+                    class="bg-gradient-to-tr from-blue-500 to-blue-200 text-white rounded-lg px-5 py-2 hover:shadow-lg transition duration-200"
+            >
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let username = null;
+    let userCount = 1;
+
+    const connect = (e) => {
+      e.preventDefault();
+      username = $("#name").val().trim();
+      if (!username) return;
+
+      const btn = $("#usernameForm button");
+      btn.prop("disabled", true).html('<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting...');
+
+      const socket = new SockJS("/chat-application");
+      stompClient = Stomp.over(socket);
+
+      stompClient.connect({}, onConnected, onError);
+    };
+
+    const onConnected = () => {
+      stompClient.subscribe("/topic/public", onMessageReceived);
+
+      stompClient.send("/app/chat.adduser", {}, JSON.stringify({
+        userName: username,
+        message: `${username} Joined the Chat`,
+        messageType: "JOIN"
+      }));
+
+      $("#username-page").addClass("hidden");
+      $("#chat-page").removeClass("hidden");
+      updateConnectionStatus(true);
+    };
+
+    const onError = () => {
+      alert("Connection failed. Please check if the server is running.");
+      $("#usernameForm button")
+        .prop("disabled", false)
+        .html('<i class="fa-solid fa-right-to-bracket mr-2"></i> Start Chatting');
+      updateConnectionStatus(false);
+    };
+
+    const sendMessage = (e) => {
+      e.preventDefault();
+      const content = $("#message").val().trim();
+      if (!content || !stompClient) return;
+
+      stompClient.send("/app/chat.send", {}, JSON.stringify({
+        userName: username,
+        message: content,
+        messageType: "CHAT"
+      }));
+
+      $("#message").val("");
+    };
+
+    const onMessageReceived = (payload) => {
+      const msg = JSON.parse(payload.body);
+      const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+      let html = "";
+
+      switch (msg.messageType) {
+        case "JOIN":
+          html = `<div class="text-center text-gray-500 italic">👤 ${msg.message}</div>`;
+          userCount++;
+          break;
+
+        case "LEAVE":
+          html = `<div class="text-center text-gray-500 italic"> ${msg.message}</div>`;
+          userCount = Math.max(1, userCount - 1);
+          break;
+
+        default:
+          const isUser = msg.userName === username;
+          html = `
+            <div class="flex flex-col ${isUser ? "items-end" : "items-start"}">
+              ${!isUser ? `<div class="text-xs text-gray-500 mb-1">${msg.userName}</div>` : ""}
+              <div class="rounded-2xl px-4 py-2 shadow-sm ${isUser ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white" : "bg-white text-gray-700 border"} max-w-[75%]">
+                ${msg.message}
+                <div class="text-[10px] opacity-70 text-right mt-1">${time}</div>
+              </div>
+            </div>`;
+      }
+
+      $("#chat").append(html);
+      updateUserCount();
+      scrollToBottom();
+    };
+
+    const updateUserCount = () => $("#userCount").text(userCount);
+
+    const updateConnectionStatus = (connected) => {
+  const status = $("#connection-status");
+  status
+    .toggleClass("bg-green-100 text-green-700", connected)
+    .toggleClass("bg-red-100 text-red-700", !connected)
+    .html(connected
+      ? '<i class="fa-solid fa-wifi"></i> Connected'
+      : '<i class="fa-solid fa-globe"></i> Disconnected');
+};
+
+
+    const scrollToBottom = () => {
+      const chat = $("#chat");
+      chat.scrollTop(chat[0].scrollHeight);
+    };
+
+    $(document).ready(() => {
+      $("#usernameForm").on("submit", connect);
+      $("#messageForm").on("submit", sendMessage);
+      $("#message").on("keypress", (e) => {
+        if (e.which === 13 && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage(e);
+        }
+      });
+    });
+</script>
+
+</body>
+</html>
