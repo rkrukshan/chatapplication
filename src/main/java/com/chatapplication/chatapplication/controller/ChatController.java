@@ -3,6 +3,7 @@ package com.chatapplication.chatapplication.controller;
 import com.chatapplication.chatapplication.dto.ChatMessage;
 import com.chatapplication.chatapplication.dto.MessageType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -14,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class ChatController {
 
     private final RedisTemplate redisTemplate;
@@ -31,6 +33,7 @@ public class ChatController {
         headerAccessor.getSessionAttributes().put("Username", chatMessage.getUserName());
         chatMessage.setMessageType(MessageType.JOIN);
         chatMessage.setMessage(chatMessage.getUserName());
+        log.info("User Joined: {}", chatMessage.getUserName());
 
         redisTemplate.convertAndSend("chat", chatMessage);
         return chatMessage;
