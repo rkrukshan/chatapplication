@@ -1,5 +1,6 @@
 package com.chatapplication.chatapplication.config;
 
+import com.chatapplication.chatapplication.listener.RedisMessageSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -21,6 +22,12 @@ public class RedisConfig {
      container.setConnectionFactory(redisConnectionFactory);
      container.addMessageListener(messageListenerAdapter, channelTopic());
      return container;
+    }
+
+    @Bean
+    public MessageListenerAdapter messageListenerAdapter(RedisMessageSubscriber redisMessageSubscriber)
+    {
+        return new MessageListenerAdapter(redisMessageSubscriber);
     }
 
     @Bean
