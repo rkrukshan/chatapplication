@@ -20,6 +20,7 @@ public class ChatController {
     public ChatMessage sendChatMessage(@Payload ChatMessage chatMessage){
     chatMessage.setTimestamp(LocalTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME));
     redisTemplate.convertAndSend("chat", chatMessage);
+    return chatMessage;
     }
 
 }
