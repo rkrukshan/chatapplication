@@ -21,7 +21,7 @@
 
 
 </head>
-<body class="min-h-screen bg-gradient-to-tr from-blue-500 to-blue-200 flex items-center justify-center font-sans">
+<body class="min-h-screen bg-gradient-to-tr from-blue-700 to-blue-200 flex items-center justify-center font-sans">
 
 <div id="username-page" class="w-full max-w-md bg-white/90 backdrop-blur rounded-2xl shadow-xl p-8">
     <h2 class="text-2xl font-bold text-center mb-2 text-blue-500 flex justify-center items-center gap-2">
@@ -32,17 +32,16 @@
     <form id="usernameForm" class="space-y-4">
         <div>
             <label for="name" class="block text-gray-700 font-medium mb-1">Username</label>
-            <div class="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-400">
+            <div class="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-400">
                 <i class="fa-solid fa-user text-gray-400 mr-2"></i>
                 <input
                         id="name"
                         type="text"
-                        placeholder="Enter your username"
+                        placeholder="Enter username"
                         class="w-full outline-none"
                         required
                 />
             </div>
-            <small class="text-gray-400 text-sm">Enter Username</small>
         </div>
 
         <button
@@ -165,9 +164,9 @@
           html = `
             <div class="flex flex-col ${isUser ? "items-end" : "items-start"}">
               ${!isUser ? `<div class="text-xs text-gray-500 mb-1">${msg.userName}</div>` : ""}
-              <div class="rounded-2xl px-4 py-2 shadow-sm ${isUser ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white" : "bg-white text-gray-700 border"} max-w-[75%]">
+              <div class="rounded-2xl px-4 py-2 shadow-sm ${isUser ? "bg-gradient-to-tr from-blue-500 to-blue-300 text-white font-semibold" : "bg-white text-gray-700 border"} max-w-[75%]">
                 ${msg.message}
-                <div class="text-[10px] opacity-70 text-right mt-1">${time}</div>
+                <div class="text-[10px] font-semibold opacity-70 text-right mt-1">${time}</div>
               </div>
             </div>`;
       }
