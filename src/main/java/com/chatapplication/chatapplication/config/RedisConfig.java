@@ -18,10 +18,10 @@ public class RedisConfig {
     public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory redisConnectionFactory,
                                                                        MessageListenerAdapter messageListenerAdapter)
     {
-     RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-     container.setConnectionFactory(redisConnectionFactory);
-     container.addMessageListener(messageListenerAdapter, channelTopic());
-     return container;
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redisConnectionFactory);
+        container.addMessageListener(messageListenerAdapter, channelTopic());
+        return container;
     }
 
     @Bean
@@ -44,5 +44,4 @@ public class RedisConfig {
         template.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
         return template;
     }
-
 }
